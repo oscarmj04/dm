@@ -20,6 +20,7 @@ _Design a simple CLI app using the Kotlin standard library_
 
 - _Mention any deviations from the instructions or additional work._
 - _Specify any libraries used._
+- buenos dias
 
 ---
 
