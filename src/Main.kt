@@ -112,7 +112,7 @@ fun filterTasks(tasklist: List<Map<String, Any>>,completed: Boolean){
         return
     }
     val st = if(completed) "Completado" else "En progreso"
-    println("-------------Listando tareas ($st)-------------")
+    println("-------------Listando tareas ($st)--------------")
     for (task in tasklist) {
         if(task["estado"] == completed){
             println("Tarea ${task["id"]} | Titulo: ${task["titulo"]} | Estado: $st | Descripcion: ${task["descripcion"]} | Fecha: ${task["fecha"]} | Categoria: ${task["categoria"]}")
