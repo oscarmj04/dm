@@ -1,5 +1,5 @@
 [![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/wTylcrtj)
-# 📱 Mobile Task Manager – Assignment X
+# 📱 Mobile Task Manager – Assignment 2
 
 This repository contains the implementation for **Assignment 2** of the Task Manager App project.
 
@@ -9,12 +9,11 @@ _Design a simple CLI app using the Kotlin standard library_
 ## ✅ Implemented Features
 
 - Implemented an option menu
-- Implemented addTask, listTasks, markTasks (as completed) and filterTasks
-- Feature 3
+- Implemented functions for addTask, listTasks, markTasks (as completed) and filterTasks
 
 ## 🚧 Known Issues
 
-- No date format validation
+- Date format validation is not implemented
 
 ## 📝 Notes
 
