@@ -53,10 +53,10 @@ fun addTask(tasklist:MutableList<Map<String, Any>>){
 
     println("Estado")
     println("1. Completado \n2. En progreso")
-    var estado = false
-    when(readLine()?.trim().orEmpty()){
-        "1" -> estado = true
-        else -> estado = false
+
+    val estado = when (readLine()?.trim().orEmpty()) {
+        "1" -> true
+        else -> false
     }
 
     println("Descripcion")
@@ -112,7 +112,7 @@ fun filterTasks(tasklist: List<Map<String, Any>>,completed: Boolean){
         println("Lista de tareas vacía")
         return
     }
-    var st = if(completed) "Completado" else "En progreso"
+    val st = if(completed) "Completado" else "En progreso"
     println("-------------Listando tareas $st-------------")
     for (task in tasklist) {
         if(task["estado"] == completed){
