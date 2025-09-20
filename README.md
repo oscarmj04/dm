@@ -13,7 +13,7 @@ _Design a simple CLI app using the Kotlin standard library_
 
 ## 🚧 Known Issues
 
-- Dato format validation is not implemented
+- Date format validation is not implemented
 
 ## 📝 Notes
 
