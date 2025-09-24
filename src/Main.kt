@@ -1,3 +1,4 @@
+
 fun main (){
     val tasklist = mutableListOf<Map<String, Any>>()
     var running = true
@@ -32,13 +33,14 @@ fun main (){
 
 }
 fun createTask(id: Int, titulo: String, estado: Boolean, descripcion: String, fecha: String, categoria: String): Map<String, Any> {
+    val categoriaEnum = Category.entries.find{it.name == categoria.uppercase()}?:Category.PERSONAL
     return mapOf(
         "id" to id,
         "titulo" to titulo,
         "estado" to estado,
         "descripcion" to descripcion,
         "fecha" to fecha,
-        "categoria" to categoria
+        "categoria" to categoriaEnum
     )
 }
 
