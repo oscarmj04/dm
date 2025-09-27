@@ -4,7 +4,7 @@ data class Task(
     val id: Int,
     val title: String,
     val description: String,
-    val dueDate: LocalDate,
+    val dueDate: String,
     val category: Category,
-    var isDone: Boolean = false
+    var isDone: Boolean
 )
