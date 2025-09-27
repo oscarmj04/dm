@@ -10,35 +10,35 @@ class TaskController {
         println("Id asignado = $id")
 
         println("Titulo")
-        val titulo = readLine()?.trim().orEmpty()
+        val titulo = readlnOrNull()?.trim().orEmpty()
 
         println("Estado")
         println("1. Completado \n2. En progreso")
 
-        val estado = when (readLine()?.trim().orEmpty()) {
+        val estado = when (readlnOrNull()?.trim().orEmpty()) {
             "1" -> true
             else -> false
         }
 
         println("Descripcion")
-        val descripcion = readLine()?.trim().orEmpty()
+        val descripcion = readlnOrNull()?.trim().orEmpty()
 
         var fecha: String
         println("Fecha vencimiento (YYYY-MM-DD)")
         while (true) {
-            val input = readLine()?.trim().orEmpty()
+            val input = readlnOrNull()?.trim().orEmpty()
             try {
                 // Intentamos parsear la fecha
                 val localDate = LocalDate.parse(input)
                 fecha = localDate.formatAsMonthDay()
                 break // Salimos del bucle si la fecha es correcta
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 println("Formato de fecha inválido. Por favor ingresa YYYY-MM-DD.")
             }
         }
 
         println("Categoria")
-        val categoria = readLine()?.trim().orEmpty()
+        val categoria = readlnOrNull()?.trim().orEmpty()
 
         val categoriaEnum = Category.entries.find{it.name == categoria.uppercase()}?:Category.OTHER
 
@@ -53,7 +53,7 @@ class TaskController {
         }
         println("-------------Listando tareas-------------")
         for (task in tasks) {
-            val st = if(task.isDone as Boolean) "Completado" else "En progreso"
+            val st = if(task.isDone) "Completado" else "En progreso"
             println("Tarea ${task.id} | Titulo: ${task.title} | Descripcion: ${task.description} | Estado: $st | Categoria: ${task.category} | Fecha vencimiento (MM DD): ${task.dueDate}")
         }
     }
@@ -64,12 +64,11 @@ class TaskController {
         }
         println("-------------Listando tareas incompletas-------------")
         for (task in tasks) {
-            if(task.isDone == false){
+            if(!task.isDone)
                 println("Tarea ${task.id} | Titulo: ${task.title} | Fecha vencimiento (MM DD): ${task.dueDate}")
-            }
         }
         println("Seleccione una tarea (id) para marcarla como completada")
-        val i = readLine()?.trim().orEmpty().toIntOrNull()
+        val i = readlnOrNull()?.trim().orEmpty().toIntOrNull()
         if (i == null) {
             println("ID invalido")
         }else{

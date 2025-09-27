@@ -1,6 +1,6 @@
 
 fun main (){
-    val controller : TaskController = TaskController()
+    val controller = TaskController()
     var running = true
     while (running) {
         println("\n======Bienvenido al menú======")
@@ -11,13 +11,13 @@ fun main (){
         println("5. Salir")
         println("Elija una opción")
 
-        when(readLine()){
+        when(readlnOrNull()){
             "1" -> controller.addTask()
             "2" -> controller.listTasks()
             "3" -> controller.markTasks()
             "4" -> {
                 print("¿Mostrar completadas? (s/n): ")
-                val option = readLine()?.trim()?.lowercase()
+                val option = readlnOrNull()?.trim()?.lowercase()
                 val completed = option == "s"
                 controller.filterTasks(completed)
             }
