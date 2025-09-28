@@ -23,14 +23,15 @@ class TaskController {
         println("Descripcion")
         val descripcion = readlnOrNull()?.trim().orEmpty()
 
-        var fecha: String
+
         println("Fecha vencimiento (YYYY-MM-DD)")
+        var localDate : LocalDate
         while (true) {
             val input = readlnOrNull()?.trim().orEmpty()
             try {
                 // Intentamos parsear la fecha
-                val localDate = LocalDate.parse(input)
-                fecha = localDate.formatAsMonthDay()
+                localDate = LocalDate.parse(input)
+
                 break // Salimos del bucle si la fecha es correcta
             } catch (_: Exception) {
                 println("Formato de fecha inválido. Por favor ingresa YYYY-MM-DD.")
@@ -42,7 +43,7 @@ class TaskController {
 
         val categoriaEnum = Category.entries.find{it.name == categoria.uppercase()}?:Category.OTHER
 
-        val tarea = Task(id, titulo, descripcion, fecha, categoriaEnum,estado)
+        val tarea = Task(id, titulo, descripcion, localDate, categoriaEnum,estado)
         tasks.add(tarea)
         println("Tarea añadida satisfactoriamente")
     }
@@ -54,7 +55,7 @@ class TaskController {
         println("-------------Listando tareas-------------")
         for (task in tasks) {
             val st = if(task.isDone) "Completado" else "En progreso"
-            println("Tarea ${task.id} | Titulo: ${task.title} | Descripcion: ${task.description} | Estado: $st | Categoria: ${task.category} | Fecha vencimiento (MM DD): ${task.dueDate}")
+            println("Tarea ${task.id} | Titulo: ${task.title} | Descripcion: ${task.description} | Estado: $st | Categoria: ${task.category} | Fecha vencimiento (MM DD): ${task.dueDate.formatAsMonthDay()}")
         }
     }
     fun markTasks(){
@@ -62,23 +63,33 @@ class TaskController {
             println("Lista de tareas vacía")
             return
         }
+
         println("-------------Listando tareas incompletas-------------")
+        var n = 0
         for (task in tasks) {
-            if(!task.isDone)
-                println("Tarea ${task.id} | Titulo: ${task.title} | Fecha vencimiento (MM DD): ${task.dueDate}")
+            if(!task.isDone){
+                println("Tarea ${task.id} | Titulo: ${task.title} | Fecha vencimiento (MM DD): ${task.dueDate.formatAsMonthDay()}")
+                n++
+            }
         }
-        println("Seleccione una tarea (id) para marcarla como completada")
-        val i = readlnOrNull()?.trim().orEmpty().toIntOrNull()
-        if (i == null) {
-            println("ID invalido")
+        if(n == 0){
+            println("No hay tareas en progreso para listar")
         }else{
-            val task = tasks.find { it.id == i }
-            if (task == null) {
-                 println("No se encontro tarea para el id $i")
+            println("Seleccione una tarea (id) para marcarla como completada")
+            val i = readlnOrNull()?.trim().orEmpty().toIntOrNull()
+            if (i == null) {
+                println("ID invalido")
             }else{
-                task.isDone = true
+                val task = tasks.find { it.id == i }
+                if (task == null) {
+                    println("No se encontro tarea para el id $i")
+                }else{
+                    task.isDone = true
+                    println("Tarea $i marcada como completada")
         }
         }
+        }
+
     }
 
 
@@ -91,7 +102,7 @@ class TaskController {
         println("-------------Listando tareas ($st)--------------")
         for (task in tasks) {
             if(task.isDone == completed){
-                println("Tarea ${task.id} | Titulo: ${task.title} | Estado: $st | Descripcion: ${task.description} | Fecha: ${task.dueDate} | Categoria: ${task.category}")
+                println("Tarea ${task.id} | Titulo: ${task.title} | Estado: $st | Descripcion: ${task.description} | Fecha: ${task.dueDate.formatAsMonthDay()} | Categoria: ${task.category}")
             }
         }
 }
