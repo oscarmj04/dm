@@ -26,14 +26,9 @@ _Prepare the codebase for Android integration in Week 04_
 
 ## 🚧 Known Issues
 
-- 1. **`dueDate` stored as `String`**
-    - Currently, the due date is stored as a `String` in the `Task` class after formatting, which means the year information is lost.
-    - As a result, date-based calculations (e.g., comparing deadlines or sorting by date) are not possible directly.
-
 
 ## 📝 Notes
-
-- _dueDate saved as String in Task Class_
+- _Currently, the TaskController class combines business logic (task list management) with the console user interface (println, readlnOrNull)._
 - _Specify any libraries used._
 
 ---
