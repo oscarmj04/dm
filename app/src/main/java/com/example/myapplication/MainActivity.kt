@@ -1,22 +1,20 @@
 package com.example.myapplication
 
-import Task
+
 import android.os.Bundle
-import android.widget.Button
-import android.widget.EditText
-import android.widget.TextView
-import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import java.time.LocalDate
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+
 
 class MainActivity : AppCompatActivity() {
 
-    private val tasklist = mutableListOf<Task>()
-    private lateinit var tvTasks: TextView
-    private var nextId = 1
+    private lateinit var recyclerView: RecyclerView
+    private lateinit var adapter: TaskAdapter
+    private val dummyTasks = mutableListOf<String>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -29,81 +27,38 @@ class MainActivity : AppCompatActivity() {
             insets
         }
 
-        // Referencias a vistas
-        tvTasks = findViewById(R.id.tvTasks)
-        val btnAdd = findViewById<Button>(R.id.btnAddTask)
-        val btnMark = findViewById<Button>(R.id.btnMarkTask)
-        val btnExit = findViewById<Button>(R.id.btnExit)
 
-        // Lógica de botones
 
-        btnAdd.setOnClickListener {
-            val etTitulo = findViewById<EditText>(R.id.etTitulo)
-            val titulo = etTitulo.text.toString().trim()
+        // Referencia al RecyclerView
+        recyclerView = findViewById(R.id.recyclerViewTasks)
+        recyclerView.layoutManager = LinearLayoutManager(this)
+        // Generar lista de tareas dummy
+        generateDummyTasks()
 
-            if (titulo.isEmpty()) {
-                Toast.makeText(this, "El título no puede estar vacío", Toast.LENGTH_SHORT).show()
-            } else {
-                tvTasks.text = "Tarea añadida"
-                addTask(titulo, false, " ", LocalDate.now(), Category.OTRO)
-                refreshTasks()
-            }
-            etTitulo.text.clear()
-        }
+        // Inicializar Adapter
+        adapter = TaskAdapter(dummyTasks)
+        recyclerView.adapter = this.adapter
+    }
+    private fun generateDummyTasks() {
+        val sampleTitles = listOf(
+            "Comprar leche",
+            "Hacer ejercicio",
+            "Enviar correo",
+            "Leer un libro",
+            "Preparar presentación",
+            "Llamar a mamá",
+            "Aprender Kotlin",
+            "Organizar escritorio",
+            "Pagar facturas",
+            "Ver una película"
+        )
 
-        btnMark.setOnClickListener {
-            val etIDtoMark = findViewById<EditText>(R.id.etIDtoMark)
-            var n : Int = -1
-            try {
-                n = Integer.parseInt(etIDtoMark.text.toString())
-            }catch (e: Exception){}
-            if(n == -1){
-                Toast.makeText(this, "ID invalido", Toast.LENGTH_SHORT).show()
-            }else{
-                markTask(n)
-                refreshTasks()
-                etIDtoMark.text.clear()
-            }
-        }
-
-        btnExit.setOnClickListener {
-            finish()
+        // Crear 10 tareas random
+        repeat(10) {
+            val randomTitle = sampleTitles.random() + " #${it + 1}"
+            dummyTasks.add(randomTitle)
         }
     }
-
-    // ======================
-    // Funciones de gestión
-    // ======================
-
-
-    fun addTask(titulo: String, estado: Boolean, descripcion: String, fecha: LocalDate, categoria: Category) {
-        val id = nextId++
-        val tarea = Task(id, titulo, descripcion, fecha, categoria, estado)
-        tasklist.add(tarea)
-    }
-
-    fun markTask(id: Int) {
-        val t = tasklist.find {it.id == id}
-        if(t != null){
-            t.isDone = true
-        }else{
-            Toast.makeText(this, "La tarea $id no se encontró", Toast.LENGTH_SHORT).show()
-        }
-
-    }
-    private fun refreshTasks() {
-        if (tasklist.isEmpty()) {
-            tvTasks.text = "No hay tareas"
-        } else {
-            val builder = StringBuilder()
-            for (task in tasklist) {
-                val estado = if (task.isDone) "Completado" else "En progreso"
-                builder.append("(${task.id}) ${task.title} - $estado\n")
-            }
-            tvTasks.text = builder.toString()
-        }
-    }
-
 
 }
 
