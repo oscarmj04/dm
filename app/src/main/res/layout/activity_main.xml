@@ -1,89 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/main"
-    android:layout_width="match_parent"
     android:background="@color/black"
+    android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     android:padding="16dp">
 
-
-    <!-- Título -->
+    <!-- Título de la pantalla -->
     <TextView
         android:id="@+id/tvTitle"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="Gestor de Tareas"
-        android:textColor="@color/white"
-        android:textSize="22sp"
+        android:text="Lista de tareas"
+        android:textSize="24sp"
         android:textStyle="bold"
-        android:gravity="center"
-        android:paddingBottom="20dp" />
-
-    <!-- Botón: Añadir tarea -->
-
-    <EditText
-        android:id="@+id/etTitulo"
-        android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:hint="Título"
-        android:inputType="text"
         android:textColor="@color/white"
-        android:textColorHint="@color/white" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
-
-    <Button
-        android:id="@+id/btnAddTask"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Añadir tarea"
-        android:padding="10dp"
-        android:layout_marginBottom="10dp" />
-
-
-    <!-- Botón: Marcar tarea como completada -->
-
-    <EditText
-        android:id="@+id/etIDtoMark"
-        android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:hint="ID de la tarea"
-        android:textColorHint="@color/white"
-        android:textColor="@color/white"
-        android:inputType="text" />
-
-    <Button
-        android:id="@+id/btnMarkTask"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Marcar tarea como completada"
-        android:padding="10dp"
-        android:layout_marginBottom="10dp" />
-
-    <!-- Botón: Salir -->
-    <Button
-        android:id="@+id/btnExit"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Salir"
-        android:padding="10dp"
-        android:layout_marginBottom="20dp" />
-
-    <!-- Texto para mostrar resultados -->
-    <ScrollView
-        android:layout_width="match_parent"
+    <!-- RecyclerView para mostrar tareas -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerViewTasks"
+        android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_weight="1">
+        app:layout_constraintTop_toBottomOf="@id/tvTitle"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
-        <TextView
-            android:id="@+id/tvTasks"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Aquí se mostrarán las tareas"
-            android:textColor="@color/white"
-            android:textSize="16sp"
-            android:padding="10dp" />
-    </ScrollView>
-
-</LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
