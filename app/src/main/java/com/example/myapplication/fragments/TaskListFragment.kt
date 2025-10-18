@@ -13,6 +13,12 @@ import com.example.myapplication.TaskAdapter
 import com.example.myapplication.databinding.FragmentTaskListBinding
 import com.example.myapplication.Category
 import java.time.LocalDate
+import androidx.lifecycle.Lifecycle
+import android.view.MenuItem
+import android.view.MenuInflater
+import android.view.Menu
+import androidx.core.view.MenuProvider
+import androidx.core.view.MenuHost
 
 class TaskListFragment : Fragment() {
 
@@ -26,6 +32,7 @@ class TaskListFragment : Fragment() {
         _binding = FragmentTaskListBinding.inflate(inflater, container, false)
         return binding.root
     }
+
     private fun onTaskClicked(task: Task) {
         val bundle = Bundle().apply {
             putSerializable("task", task)
@@ -43,13 +50,30 @@ class TaskListFragment : Fragment() {
         )
 
         val adapter = TaskAdapter(dummyTasks) { task ->
-            // Aquí se lanza el detalle
             val bundle = Bundle().apply { putSerializable("task", task) }
             findNavController().navigate(R.id.action_taskListFragment_to_taskDetailFragment, bundle)
         }
 
         binding.recyclerViewTasks.layoutManager = LinearLayoutManager(requireContext())
         binding.recyclerViewTasks.adapter = adapter
+
+        // 👇 Menú específico para la lista (aparece solo en este fragment)
+        val menuHost: MenuHost = requireActivity()
+        menuHost.addMenuProvider(object : MenuProvider {
+            override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+                menuInflater.inflate(R.menu.menu_main, menu)
+            }
+
+            override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
+                return when (menuItem.itemId) {
+                    R.id.action_add_task -> {
+                        findNavController().navigate(R.id.action_taskListFragment_to_taskFormFragment)
+                        true
+                    }
+                    else -> false
+                }
+            }
+        }, viewLifecycleOwner, Lifecycle.State.RESUMED)
     }
 
     override fun onDestroyView() {
