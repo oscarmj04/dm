@@ -8,7 +8,10 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 
 
-class TaskAdapter(private val tareas: List<Task>) : RecyclerView.Adapter<TaskAdapter.TaskViewHolder>() {
+class TaskAdapter(
+    private val tareas: List<Task>,
+    private val onTaskClick: (Task) -> Unit // <-- lambda para el click
+) : RecyclerView.Adapter<TaskAdapter.TaskViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TaskViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.item_task, parent, false)
@@ -16,7 +19,7 @@ class TaskAdapter(private val tareas: List<Task>) : RecyclerView.Adapter<TaskAda
     }
 
     override fun onBindViewHolder(holder: TaskViewHolder, position: Int) {
-        holder.bind(tareas[position])
+        holder.bind(tareas[position], onTaskClick)
     }
 
     override fun getItemCount(): Int = tareas.size
@@ -26,10 +29,12 @@ class TaskAdapter(private val tareas: List<Task>) : RecyclerView.Adapter<TaskAda
         private val tvDueDate: TextView = itemView.findViewById(R.id.tvDueDate)
         private val tvStatus: TextView = itemView.findViewById(R.id.tvStatus)
 
-        fun bind(task: Task) {
-            tvTitle.text = task.title + " #"+task.id
+        fun bind(task: Task, onTaskClick: (Task) -> Unit) {
+            tvTitle.text = "${task.title} #${task.id}"
             tvDueDate.text = task.dueDate.toString()
-            tvStatus.text = if (task.isDone) "✅" else "⏳" // Estado aleatorio
+            tvStatus.text = if (task.isDone) "✅" else "⏳"
+
+            itemView.setOnClickListener { onTaskClick(task) } // <-- disparar la acción
         }
     }
 }

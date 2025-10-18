@@ -1,80 +1,50 @@
 package com.example.myapplication
 
-
-import Task
 import android.os.Bundle
-import androidx.activity.enableEdgeToEdge
+import android.view.Menu
+import android.view.MenuItem
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import java.time.LocalDate
-
+import androidx.navigation.fragment.NavHostFragment
+import androidx.navigation.ui.setupActionBarWithNavController
 
 class MainActivity : AppCompatActivity() {
-    private var nextId = 1
-    private lateinit var recyclerView: RecyclerView
-    private lateinit var adapter: TaskAdapter
-    private val dummyTasks = mutableListOf<Task>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContentView(R.layout.activity_main)
 
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
-        }
-
-
-
-        // Referencia al RecyclerView
-        recyclerView = findViewById(R.id.recyclerViewTasks)
-        recyclerView.layoutManager = LinearLayoutManager(this)
-        // Generar lista de tareas dummy
-        generateDummyTasks()
-
-        // Inicializar Adapter
-        adapter = TaskAdapter(dummyTasks)
-        recyclerView.adapter = this.adapter
-    }
-    private fun generateDummyTasks() {
-        val sampleTitles = listOf(
-            "Saltarse ABP",
-            "Invitar a una caña a Carlos Castro",
-            "Defraudar a Hacienda",
-            "Plantar un Libro",
-            "Escribir un árbol",
-            "Apadrinar un Pingüino",
-            "Aprender Kotlin",
-            "Mirar horario trenes India",
-            "Faltar al respeto a mi compañero",
-            "Leer una película"
-        )
-
-        // Crear 10 tareas random
-        for (title in sampleTitles) {
-            dummyTasks.add(
-                Task(
-                    id = nextId++,
-                    title = title,
-                    description = "Descripción de prueba",
-                    dueDate = LocalDate.now().plusDays((1..10).random().toLong()),
-                    category = Category.OTRO, // o el valor por defecto que tengas
-                    isDone = listOf(true, false).random()
-                )
-            )
-        }
-
-        }
+        // Configurar NavController con ActionBar automática
+        val navHostFragment =
+            supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+        val navController = navHostFragment.navController
+        setupActionBarWithNavController(navController)
     }
 
+    // Para que funcione el botón "up" de la ActionBar
+    override fun onSupportNavigateUp(): Boolean {
+        val navHostFragment =
+            supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+        return navHostFragment.navController.navigateUp() || super.onSupportNavigateUp()
+    }
 
+    // Inflar el menú en la ActionBar
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.menu_main, menu)
+        return true
+    }
 
-
-
-
-
+    // Manejar clicks de items del menú
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_add_task -> {
+                // Navegar al fragment de formulario
+                val navHostFragment =
+                    supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+                navHostFragment.navController.navigate(R.id.action_taskListFragment_to_taskFormFragment)
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
+}

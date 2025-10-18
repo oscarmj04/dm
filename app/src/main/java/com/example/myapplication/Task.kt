@@ -1,4 +1,5 @@
 import com.example.myapplication.Category
+import java.io.Serializable
 import java.time.LocalDate
 
 data class Task(
@@ -8,4 +9,4 @@ data class Task(
     val dueDate: LocalDate,
     val category: Category,
     var isDone: Boolean
-)
+) : Serializable
