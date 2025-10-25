@@ -10,13 +10,12 @@
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
         android:paddingTop="?attr/actionBarSize"
-        tools:context=".fragments.TaskFormFragment">
+        tools:context=".fragments.TaskEditFragment">
 
         <EditText
             android:id="@+id/etTitle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
             android:hint="Título"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -64,7 +63,7 @@
             android:id="@+id/btnSave"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Guardar"
+            android:text="Guardar cambios"
             app:layout_constraintTop_toBottomOf="@id/cbDone"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"/>

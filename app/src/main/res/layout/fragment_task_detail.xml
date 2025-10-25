@@ -11,7 +11,7 @@
             android:id="@+id/tvDetailTitle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="80dp"
+            android:layout_marginTop="75dp"
             android:textColor="@color/black"
             android:textSize="20sp"
             android:textStyle="bold"
@@ -39,13 +39,22 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             android:paddingTop="8dp" />
+        <TextView
+            android:id="@+id/tvDetailCategory"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:textColor="@color/black"
+            app:layout_constraintTop_toBottomOf="@id/tvDetailDueDate"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:paddingTop="8dp" />
 
         <TextView
             android:id="@+id/tvDetailStatus"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:textColor="@color/black"
-            app:layout_constraintTop_toBottomOf="@id/tvDetailDueDate"
+            app:layout_constraintTop_toBottomOf="@id/tvDetailCategory"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             android:paddingTop="8dp" />
