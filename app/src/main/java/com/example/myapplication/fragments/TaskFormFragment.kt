@@ -21,7 +21,7 @@ class TaskFormFragment : Fragment() {
 
     // Solo para captura en UI (no precargamos nada)
     private var pickedDate: LocalDate = LocalDate.now()
-    private var pickedCategory: Category = Category.PERSONAL
+    private var pickedCategory: Category = Category.OTRO
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,

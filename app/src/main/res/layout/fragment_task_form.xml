@@ -9,7 +9,7 @@
         android:layout_height="match_parent"
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
-        android:paddingTop="?attr/actionBarSize"
+        android:paddingTop="90dp"
         tools:context=".fragments.TaskFormFragment">
 
         <EditText
