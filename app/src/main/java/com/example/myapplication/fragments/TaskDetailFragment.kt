@@ -44,6 +44,7 @@ class TaskDetailFragment : Fragment() {
             binding.tvDetailTitle.text = t.title
             binding.tvDetailDescription.text = t.description
             binding.tvDetailDueDate.text = t.dueDate.toString()
+            binding.tvDetailCategory.text = t.category.toString()
             binding.tvDetailStatus.text = if (t.isDone) "✅ Completada" else "⏳ Pendiente"
         }
 
