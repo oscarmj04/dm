@@ -1,36 +1,42 @@
 [![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/wTylcrtj)
-# 📱 Mobile Task Manager – Assignment 6
+# 📱 Mobile Task Manager – Assignment 7
 
-This repository contains the implementation for **Assignment 6** of the Task Manager App project.
+This repository contains the implementation for **Assignment 7** of the Task Manager App project.
 
 ## 🎯 Assignment Goal
 
-_Build a multi-screen Android UI using Kotlin, Fragments, and the Navigation Component._
+_Extend the Task Manager application to support full task creation and editing using two-way data binding and shared state between fragments._
 
-_Implement navigation between the task list, detail, and task creation screens, and manage dynamic menu visibility._
+_Integrate argument passing and result handling through Safe Args and SavedStateHandle for a complete bidirectional flow._
 
 ## ✅ Implemented Features
 
-- **TaskListFragment** – displays a list of dummy (static) `Task` objects inside a `RecyclerView`.  
-  Allows navigation to a detailed task view when an item is tapped.
-- **TaskDetailFragment** – shows full information about a selected task.
-- **TaskFormFragment** – currently a placeholder screen showing an “Under Construction” message (to be completed in future assignments).
-- **MainActivity.kt** – hosts the `NavHostFragment` and connects navigation actions to the ActionBar.
-- **menu_main.xml** – defines a dynamic menu option.
-- **nav_graph.xml** – defines navigation actions between fragments.
-- **TaskAdapter.kt** – improved to handle click events on each task item.
+- **TaskListFragment** – displays all tasks from the shared `TaskRepository` using a `RecyclerView`.  
+  Allows navigation to task details and provides a “+” menu option for adding new tasks.
+
+- **TaskDetailFragment** – shows full information about a selected task and includes an “Edit” option to modify it.  
+  The detail screen now updates automatically when returning from the edit form.
+
+- **TaskFormFragment** – implements a fully functional form for creating new tasks.  
+
+- **TaskEditFragment** – reuses the same logic and layout structure as the creation form, allowing users to modify existing tasks.  
+  When the user saves, the detail screen refreshes immediately through `SavedStateHandle`.
+
+- **TaskRepository** – in-memory singleton that stores all tasks and supports `addOrUpdate()` logic.  
+  Task IDs are now generated sequentially based on the highest existing ID.
+
+- **nav_graph.xml** – updated with Safe Args definitions and navigation actions for the new form and edit fragments.
 
 
 ## 🚧 Known Issues
 
-- Task creation and editing are not implemented yet (the Task Form screen is only a placeholder).
-- Task data is still static; no persistence or data source has been added yet.
+- Tasks remain stored only in memory; data resets when the app restarts.
 
 ## 📝 Notes
 
-- This version focuses on navigation and UI structure using Fragments and MenuProvider.
-- Logic is modularized across fragments, following Android’s recommended architecture.
-- Future updates will include actual task creation and storage features.
+- This version focuses on data binding, argument passing, and fragment state sharing.  
+- The app now achieves a complete add/edit flow fully synchronized across fragments.  
+- Future work will integrate persistent storage (Room) and Material UI components.
 
 ---
 
