@@ -8,7 +8,7 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.example.myapplication.databinding.FragmentTaskEditBinding
-import Task
+import com.example.myapplication.Task
 import com.example.myapplication.Category
 import com.example.myapplication.TaskRepository
 import java.time.LocalDate
