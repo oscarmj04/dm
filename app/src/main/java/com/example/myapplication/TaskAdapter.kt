@@ -32,7 +32,7 @@ class TaskAdapter(
         fun bind(task: Task, onTaskClick: (Task) -> Unit) {
             tvTitle.text = "${task.title} #${task.id}"
             tvDueDate.text = task.dueDate.toString()
-            tvStatus.text = if (task.isDone) "✅" else "⏳"
+            tvStatus.text = if (task.done) "✅" else "⏳"
 
             itemView.setOnClickListener { onTaskClick(task) } // <-- disparar la acción
         }

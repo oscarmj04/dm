@@ -1,4 +1,5 @@
 package com.example.myapplication
+
 import java.io.Serializable
 import java.time.LocalDate
 
@@ -8,5 +9,5 @@ data class Task(
     var description: String,
     var dueDate: LocalDate,
     var category: Category,
-    var isDone: Boolean
+    var done: Boolean
 ) : Serializable
