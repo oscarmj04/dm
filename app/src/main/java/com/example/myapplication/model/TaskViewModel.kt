@@ -41,8 +41,4 @@ class TaskViewModel : ViewModel() {
         _tasks.value = current.filterNot { it.id == id }
     }
 
-    fun markTaskDone(id: Int) {
-        val current = _tasks.value.orEmpty()
-        _tasks.value = current.map { if (it.id == id) it.copy(done = true) else it }
-    }
 }

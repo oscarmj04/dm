@@ -29,7 +29,6 @@ class TaskFormFragment : Fragment() {
         _binding = FragmentTaskFormBinding.inflate(inflater, container, false)
         binding.lifecycleOwner = viewLifecycleOwner
 
-        // Instancia ligada al layout (two-way para title/description/isDone)
         binding.task = Task(
             id = 0,
             title = "",
@@ -44,7 +43,7 @@ class TaskFormFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Categoría (AutoComplete) threshold=0
+
         val catNames = Category.values().map { it.name }
         val catAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, catNames)
         binding.actvCategory.apply {
