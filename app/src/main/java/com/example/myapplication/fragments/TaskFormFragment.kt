@@ -5,79 +5,78 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.fragment.app.Fragment
-import androidx.navigation.fragment.findNavController
-import com.example.myapplication.databinding.FragmentTaskFormBinding
-import Task
-import com.example.myapplication.Category
-import com.example.myapplication.TaskRepository
-import java.time.LocalDate
 import android.widget.ArrayAdapter
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
+import androidx.navigation.fragment.findNavController
+import com.example.myapplication.Category
+import com.example.myapplication.Task
+import com.example.myapplication.model.TaskViewModel
+import com.example.myapplication.databinding.FragmentTaskFormBinding
+import java.time.LocalDate
 
 class TaskFormFragment : Fragment() {
 
     private var _binding: FragmentTaskFormBinding? = null
     private val binding get() = _binding!!
 
-    // Solo para captura en UI (no precargamos nada)
-    private var pickedDate: LocalDate = LocalDate.now()
-    private var pickedCategory: Category = Category.OTRO
+    private val viewModel: TaskViewModel by activityViewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentTaskFormBinding.inflate(inflater, container, false)
+        binding.lifecycleOwner = viewLifecycleOwner
+
+        binding.task = Task(
+            id = 0,
+            title = "",
+            description = "",
+            dueDate = LocalDate.now(),
+            category = Category.PERSONAL,
+            done = false
+        )
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Categorías con threshold=0 y desplegable al tocar
+
         val catNames = Category.values().map { it.name }
-        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, catNames)
-        binding.actvCategory.setAdapter(adapter)
-        binding.actvCategory.threshold = 0
-        binding.actvCategory.setOnClickListener { binding.actvCategory.showDropDown() }
-        binding.actvCategory.setOnFocusChangeListener { _, hasFocus -> if (hasFocus) binding.actvCategory.showDropDown() }
-        binding.actvCategory.setOnItemClickListener { _, _, pos, _ ->
-            pickedCategory = Category.valueOf(catNames[pos])
+        val catAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, catNames)
+        binding.actvCategory.apply {
+            setAdapter(catAdapter)
+            threshold = 0
+            setOnClickListener { showDropDown() }
+            setOnFocusChangeListener { _, hasFocus -> if (hasFocus) showDropDown() }
+            setText(binding.task?.category?.name ?: Category.PERSONAL.name, false)
+            setOnItemClickListener { _, _, pos, _ ->
+                binding.task?.category = Category.valueOf(catNames[pos])
+            }
         }
 
-        // Fecha con DatePicker
+        // Fecha
+        binding.etDueDate.setText(binding.task?.dueDate?.toString().orEmpty())
         binding.etDueDate.setOnClickListener {
-            val d = pickedDate
+            val d = binding.task?.dueDate ?: LocalDate.now()
             DatePickerDialog(
                 requireContext(),
                 { _, y, m, day ->
-                    pickedDate = LocalDate.of(y, m + 1, day)
-                    binding.etDueDate.setText(pickedDate.toString())
+                    val picked = LocalDate.of(y, m + 1, day)
+                    binding.task?.dueDate = picked
+                    binding.etDueDate.setText(picked.toString())
                 },
                 d.year, d.monthValue - 1, d.dayOfMonth
             ).show()
         }
-        // Valor inicial visible
-        binding.etDueDate.setText(pickedDate.toString())
-        binding.actvCategory.setText(pickedCategory.name, false)
 
-        // Guardar → crear Task nueva y añadir al repo
+        // Guardar → ViewModel.addTask y volver
         binding.btnSave.setOnClickListener {
-            val newTask = Task(
-                id = 0,
-                title = binding.etTitle.text?.toString().orEmpty(),
-                description = binding.etDescription.text?.toString().orEmpty(),
-                dueDate = pickedDate,
-                category = pickedCategory,
-                isDone = binding.cbDone.isChecked
-            )
-            val saved = TaskRepository.add(newTask)
-
-            // Notificar y volver
-            findNavController().previousBackStackEntry
-                ?.savedStateHandle
-                ?.set("task_result", saved.id)
-            findNavController().popBackStack()
+            val newTask = binding.task!!.copy() // two-way ya volcó los campos editables
+            viewModel.addTask(newTask)
+            findNavController().popBackStack() // vuelve a la lista; ésta se refresca sola por LiveData
         }
     }
 

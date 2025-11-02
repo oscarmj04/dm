@@ -3,6 +3,11 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools">
+    <data>
+        <variable
+            name="task"
+            type="com.example.myapplication.Task"/>
+    </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
@@ -17,6 +22,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:hint="Título"
+            android:text="@={task.title}"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
@@ -26,6 +32,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:hint="Descripción"
+            android:text="@={task.description}"
             app:layout_constraintTop_toBottomOf="@id/etTitle"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
@@ -35,6 +42,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:hint="Categoría"
+            android:text="@{task.category.toString()}"
             android:completionThreshold="0"
             app:layout_constraintTop_toBottomOf="@id/etDescription"
             app:layout_constraintStart_toStartOf="parent"
@@ -45,6 +53,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:hint="Fecha (YYYY-MM-DD)"
+            android:text="@{task.dueDate.toString()}"
             android:focusable="false"
             android:clickable="true"
             app:layout_constraintTop_toBottomOf="@id/actvCategory"
@@ -56,6 +65,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Completada"
+            android:checked="@={task.done}"
             app:layout_constraintTop_toBottomOf="@id/etDueDate"
             app:layout_constraintStart_toStartOf="parent"/>
 
