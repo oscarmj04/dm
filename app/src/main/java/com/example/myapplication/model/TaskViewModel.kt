@@ -1,44 +1,43 @@
 package com.example.myapplication.model
-import com.example.myapplication.*
+
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
-import java.time.LocalDate
+import androidx.lifecycle.viewModelScope
+import com.example.myapplication.AppDatabase
+import com.example.myapplication.Task
+import com.example.myapplication.TaskDao
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
-class TaskViewModel : ViewModel() {
+class TaskViewModel(application: Application) : AndroidViewModel(application) {
 
-    // Estado interno (mutable)
-    private val _tasks = MutableLiveData<List<Task>>(
-        listOf(
-            Task(1, "Aprender Kotlin", "Fundamentos", LocalDate.now(), Category.PERSONAL, false),
-            Task(2, "Sacar al perro", "Parque 20min", LocalDate.now().plusDays(1), Category.URGENTE, true),
-            Task(3, "Leer libro", "Cap. 4", LocalDate.now().plusDays(2), Category.PERSONAL, false)
-        )
-    )
+    private val dao: TaskDao = AppDatabase.getInstance(application).taskDao()
 
-    // Expuesto sólo como LiveData
-    val tasks: LiveData<List<Task>> = _tasks
+    /** Lista reactiva directamente desde Room (LiveData) */
+    val tasks: LiveData<List<Task>> = dao.getAll()
 
-    // ===== Helpers =====
+    /** Observa una tarea concreta por id (para detalle/edición) */
+    fun getTaskById(id: Int): LiveData<Task> = dao.observeById(id)
 
-    private fun nextId(): Int = (_tasks.value?.maxOfOrNull { it.id } ?: 0) + 1
-
-    fun getTaskById(id: Int): Task? = _tasks.value?.firstOrNull { it.id == id }
-
+    /** Insertar (id lo autogenera Room) */
     fun addTask(task: Task) {
-        val current = _tasks.value.orEmpty()
-        val withId = if (task.id == 0) task.copy(id = nextId()) else task
-        _tasks.value = current + withId
+        viewModelScope.launch(Dispatchers.IO) {
+            dao.insert(task.copy(id = 0))
+        }
     }
 
+    /** Actualizar (título, descripción, dueDate, category, done/isDone, etc.) */
     fun updateTask(updated: Task) {
-        val current = _tasks.value.orEmpty()
-        _tasks.value = current.map { if (it.id == updated.id) updated else it }
+        viewModelScope.launch(Dispatchers.IO) {
+            dao.update(updated)
+        }
     }
 
+    /** Eliminar por id */
     fun deleteTask(id: Int) {
-        val current = _tasks.value.orEmpty()
-        _tasks.value = current.filterNot { it.id == id }
+        viewModelScope.launch(Dispatchers.IO) {
+            dao.deleteById(id)
+        }
     }
-
 }

@@ -11,7 +11,6 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import com.example.myapplication.Category
-import com.example.myapplication.Task
 import com.example.myapplication.model.TaskViewModel
 import com.example.myapplication.databinding.FragmentTaskEditBinding
 import java.time.LocalDate
@@ -36,15 +35,24 @@ class TaskEditFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         val taskId = arguments?.getInt("taskId", -1) ?: -1
-        val loaded: Task? = viewModel.getTaskById(taskId)
-        if (loaded == null) {
+        if (taskId == -1) {
             Toast.makeText(requireContext(), "Tarea no encontrada", Toast.LENGTH_SHORT).show()
             findNavController().popBackStack()
             return
         }
-        binding.task = loaded   // two-way rellena los campos
 
-        // Categoría
+        // Observa la tarea desde Room y vincúlala al binding
+        viewModel.getTaskById(taskId).observe(viewLifecycleOwner) { loaded ->
+            if (loaded != null) {
+                binding.task = loaded
+
+                // Sincroniza campos dependientes (texto visible)
+                binding.etDueDate.setText(loaded.dueDate.toString())
+                binding.actvCategory.setText(loaded.category.name, false)
+            }
+        }
+
+        // Categorías (AutoComplete) con threshold = 0
         val catNames = Category.values().map { it.name }
         val catAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, catNames)
         binding.actvCategory.apply {
@@ -52,14 +60,12 @@ class TaskEditFragment : Fragment() {
             threshold = 0
             setOnClickListener { showDropDown() }
             setOnFocusChangeListener { _, hasFocus -> if (hasFocus) showDropDown() }
-            setText(binding.task?.category?.name ?: Category.PERSONAL.name, false)
             setOnItemClickListener { _, _, pos, _ ->
                 binding.task?.category = Category.valueOf(catNames[pos])
             }
         }
 
-        // Fecha
-        binding.etDueDate.setText(binding.task?.dueDate?.toString().orEmpty())
+        // Fecha (DatePicker)
         binding.etDueDate.setOnClickListener {
             val d = binding.task?.dueDate ?: LocalDate.now()
             DatePickerDialog(
@@ -73,11 +79,11 @@ class TaskEditFragment : Fragment() {
             ).show()
         }
 
-        // Guardar cambios → ViewModel.updateTask
+        // Guardar cambios → update en Room
         binding.btnSave.setOnClickListener {
-            val updated = binding.task!!.copy()
-            viewModel.updateTask(updated)
-            findNavController().popBackStack() // vuelve al detalle (o lista). Se refrescará por LiveData.
+            val updated = binding.task ?: return@setOnClickListener
+            viewModel.updateTask(updated.copy())
+            findNavController().popBackStack()
         }
     }
 

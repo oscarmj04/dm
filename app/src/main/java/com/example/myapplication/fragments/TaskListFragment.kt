@@ -20,7 +20,6 @@ class TaskListFragment : Fragment() {
     private var _binding: FragmentTaskListBinding? = null
     private val binding get() = _binding!!
 
-    // ViewModel compartido (scope = Activity)
     private val viewModel: TaskViewModel by activityViewModels()
 
     override fun onCreateView(
@@ -36,21 +35,23 @@ class TaskListFragment : Fragment() {
 
         binding.recyclerViewTasks.layoutManager = LinearLayoutManager(requireContext())
 
-        // Observa la lista y actualiza el RecyclerView
+        // Observa tareas de Room y pinta la lista
         viewModel.tasks.observe(viewLifecycleOwner) { items ->
             val adapter = TaskAdapter(items) { task: Task ->
-                // Recomendado: pasar sólo el id
                 val args = Bundle().apply { putInt("taskId", task.id) }
-                findNavController().navigate(R.id.action_taskListFragment_to_taskDetailFragment, args)
+                findNavController().navigate(
+                    R.id.action_taskListFragment_to_taskDetailFragment,
+                    args
+                )
             }
             binding.recyclerViewTasks.adapter = adapter
         }
 
-        // Menú "+" sólo aquí
+        // Menú "+" solo en la lista
         val menuHost: MenuHost = requireActivity()
         menuHost.addMenuProvider(object : MenuProvider {
             override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
-                menuInflater.inflate(R.menu.menu_main, menu) // contiene el "+"
+                menuInflater.inflate(R.menu.menu_main, menu)
             }
             override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
                 return when (menuItem.itemId) {
