@@ -1,37 +1,34 @@
 [![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/wTylcrtj)
-# 📱 Mobile Task Manager – Assignment 8
+# 📱 Mobile Task Manager – Assignment 9
 
-This repository contains the implementation for **Assignment 8** of the Task Manager App project.
+This repository contains the implementation for **Assignment 9** of the Task Manager App project.
 
 ## 🎯 Assignment Goal
 
-_Implement a shared ViewModel architecture (MVVM) to centralize task management and enable reactive UI updates._
+_Add local persistence to the Task Manager app using **Room** and **Kotlin coroutines**, ensuring all task data is stored permanently on the device._
 
-_Use LiveData and data binding to synchronize state automatically between fragments (list, detail, and form)._
+_Refactor the architecture so the ViewModel delegates all state management to the Room database layer._
 
 ## ✅ Implemented Features
 
-- **TaskViewModel.kt** – acts as the single source of truth for all task data using `LiveData<List<Task>>`.  
-  Handles adding, updating, and deleting tasks reactively.
-- **TaskListFragment** – observes `viewModel.tasks` and updates the RecyclerView automatically when tasks are added or modified.
-- **TaskFormFragment** – uses **two-way data binding** (`@={...}`) to create new tasks, updating the ViewModel directly through `addTask()`.
-- **TaskEditFragment** – edits existing tasks loaded from the shared ViewModel using `updateTask()`.  
-  All fields (title, description, due date, category, completion state) remain synchronized via two-way binding.
-- **TaskDetailFragment** – retrieves the selected task from the ViewModel using its ID and displays all its details, including **category**.  
-  Provides an option to edit or delete the task, updating the shared state instantly.
-- **LiveData observation** – ensures any change in the data model immediately reflects across all active fragments.
+- **Task.kt** – now annotated with `@Entity`, defining the table structure for Room.  
+- **Converters.kt** – provides custom type converters for `LocalDate` and `Category` to allow Room to persist them.
+- **TaskDao.kt** – defines all database operations (`insert`, `update`, `delete`, and queries) using suspend functions and LiveData.
+- **AppDatabase.kt** – implements the Room singleton database (`tasks.db`) with type converters enabled.
+- **TaskViewModel.kt** – refactored to interact directly with Room via `TaskDao`.  
+- **TaskListFragment** – observes `viewModel.tasks` (LiveData from Room) and updates the RecyclerView automatically when data changes.
+- **TaskDetailFragment** – observes a single task from Room, displaying full details (including **category**) and supporting **edit** and **delete** actions.
 
 ## 🚧 Known Issues
 
-- Tasks are still stored in-memory; persistence with Room will be introduced in future assignments.
-- UI components use basic Android widgets (Material components not yet applied).
+- The app currently stores data locally only.
 
 ## 📝 Notes
 
-- The app now follows the **MVVM pattern**, decoupling UI logic from state management.
-- The `TaskViewModel` replaces the old in-memory repository and manages all CRUD operations.
-- The property `done` (proxy for `isDone`) enables proper two-way binding for completion state.
-- LiveData propagation guarantees that all fragments stay synchronized without manual refreshes.
+- Room now provides full **local persistence**, ensuring tasks remain saved after closing the app.
+- The `TaskViewModel` acts as a bridge between the UI and the database, performing all I/O work off the main thread using coroutines.
+- The architecture fully follows the **MVVM pattern**, combining Room, LiveData, and data binding for a reactive and maintainable design.
+- LiveData from Room guarantees automatic UI updates without manual refreshes.
 
 ---
 
