@@ -29,8 +29,9 @@ class TaskFormFragment : Fragment() {
         _binding = FragmentTaskFormBinding.inflate(inflater, container, false)
         binding.lifecycleOwner = viewLifecycleOwner
 
+        // Task base para two-way
         binding.task = Task(
-            id = 0,
+            id = 0, // Room autogenera
             title = "",
             description = "",
             dueDate = LocalDate.now(),
@@ -43,7 +44,7 @@ class TaskFormFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-
+        // Categorías (AutoComplete) threshold=0
         val catNames = Category.values().map { it.name }
         val catAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, catNames)
         binding.actvCategory.apply {
@@ -57,7 +58,7 @@ class TaskFormFragment : Fragment() {
             }
         }
 
-        // Fecha
+        // Fecha (DatePicker)
         binding.etDueDate.setText(binding.task?.dueDate?.toString().orEmpty())
         binding.etDueDate.setOnClickListener {
             val d = binding.task?.dueDate ?: LocalDate.now()
@@ -72,11 +73,11 @@ class TaskFormFragment : Fragment() {
             ).show()
         }
 
-        // Guardar → ViewModel.addTask y volver
+        // Guardar → insertar en Room (vía ViewModel)
         binding.btnSave.setOnClickListener {
-            val newTask = binding.task!!.copy() // two-way ya volcó los campos editables
+            val newTask = binding.task!!.copy(id = 0) // id lo pone Room
             viewModel.addTask(newTask)
-            findNavController().popBackStack() // vuelve a la lista; ésta se refresca sola por LiveData
+            findNavController().popBackStack() // la lista se actualiza sola por LiveData
         }
     }
 

@@ -35,47 +35,44 @@ class TaskDetailFragment : Fragment() {
         binding.tvDetailTitle.text = task.title
         binding.tvDetailDescription.text = task.description
         binding.tvDetailDueDate.text = task.dueDate.toString()
-        binding.tvDetailCategory.text = task.category.toString()
         binding.tvDetailStatus.text = if (task.done) "✅ Completada" else "⏳ Pendiente"
+        binding.tvDetailCategory.text = task.category.name
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Recuperar taskId (preferido). Si no, derivarlo de un Task serializado previo.
         taskId = arguments?.getInt("taskId", -1) ?: -1
-        if (taskId == -1) {
-            val t = arguments?.getSerializable("task") as? Task
-            taskId = t?.id ?: -1
-        }
-
         if (taskId == -1) {
             Toast.makeText(requireContext(), "Tarea no encontrada", Toast.LENGTH_SHORT).show()
             findNavController().popBackStack()
             return
         }
 
-        // Observa la lista y re-renderiza cuando cambie esta tarea
-        viewModel.tasks.observe(viewLifecycleOwner) {
-            viewModel.getTaskById(taskId)?.let(::render)
+        // Observa la tarea en Room y refresca UI
+        viewModel.getTaskById(taskId).observe(viewLifecycleOwner) { task ->
+            if (task != null) render(task)
         }
 
-        // Menú contextual: Editar + (opcional) Borrar
+        // Menú contextual: Editar + Eliminar
         val menuHost: MenuHost = requireActivity()
         menuHost.addMenuProvider(object : MenuProvider {
             override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
-                menuInflater.inflate(R.menu.menu_detail, menu) // debe tener action_edit y opcional action_delete
+                menuInflater.inflate(R.menu.menu_detail, menu)
             }
             override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
                 return when (menuItem.itemId) {
                     R.id.action_edit -> {
                         val args = Bundle().apply { putInt("taskId", taskId) }
-                        findNavController().navigate(R.id.action_taskDetailFragment_to_taskEditFragment, args)
+                        findNavController().navigate(
+                            R.id.action_taskDetailFragment_to_taskEditFragment,
+                            args
+                        )
                         true
                     }
                     R.id.action_delete -> {
                         viewModel.deleteTask(taskId)
-                        findNavController().popBackStack() // volver a la lista
+                        findNavController().popBackStack()
                         true
                     }
                     else -> false
