@@ -1,36 +1,37 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/wTylcrtj)
-# 📱 Mobile Task Manager – Assignment 9
+# 📱 Mobile Task Manager – Assignment 10
 
-This repository contains the implementation for **Assignment 9** of the Task Manager App project.
+This repository contains the implementation for **Assignment 10** of the Task Manager App project.
 
 ## 🎯 Assignment Goal
 
-_Add local persistence to the Task Manager app using **Room** and **Kotlin coroutines**, ensuring all task data is stored permanently on the device._
-
-_Refactor the architecture so the ViewModel delegates all state management to the Room database layer._
+_Enhance the task list UI by introducing **category grouping**, **heterogeneous RecyclerView items**, and **gesture-based interactions** (swipe + drag), while maintaining MVVM structure with Room as the persistence layer._
 
 ## ✅ Implemented Features
 
-- **Task.kt** – now annotated with `@Entity`, defining the table structure for Room.  
-- **Converters.kt** – provides custom type converters for `LocalDate` and `Category` to allow Room to persist them.
-- **TaskDao.kt** – defines all database operations (`insert`, `update`, `delete`, and queries) using suspend functions and LiveData.
-- **AppDatabase.kt** – implements the Room singleton database (`tasks.db`) with type converters enabled.
-- **TaskViewModel.kt** – refactored to interact directly with Room via `TaskDao`.  
-- **TaskListFragment** – observes `viewModel.tasks` (LiveData from Room) and updates the RecyclerView automatically when data changes.
-- **TaskDetailFragment** – observes a single task from Room, displaying full details (including **category**) and supporting **edit** and **delete** actions.
+- **TaskListItem.kt** – sealed class defining heterogeneous RecyclerView items (`Header` and `TaskItem`).
+- **TaskViewModel.kt** – now exposes a transformed list  
+  `taskListItems: LiveData<List<TaskListItem>>`  
+  grouping tasks by category and ordering them by due date.
+- **TaskListAdapter.kt** – migrated to `ListAdapter` with `DiffUtil`, supporting two distinct view types with separate ViewHolders.
+- **item_header.xml** – new layout for category header sections, visually differentiating categories within the list.
+- **TaskListFragment** – updated to observe `taskListItems` and to configure gesture-based interactions:
+  - **Swipe left →** delete task  
+  - **Swipe right →** mark task as completed  
+  - **Drag & drop →** reorder tasks within the same category  
+- **Gesture handling** – implemented using `ItemTouchHelper`, ensuring header elements cannot be swiped or dragged.
 
 ## 🚧 Known Issues
 
-- The app currently stores data locally only.
+- Drag & drop order is not persisted (UI-only reordering).
 
 ## 📝 Notes
 
-- Room now provides full **local persistence**, ensuring tasks remain saved after closing the app.
-- The `TaskViewModel` acts as a bridge between the UI and the database, performing all I/O work off the main thread using coroutines.
-- The architecture fully follows the **MVVM pattern**, combining Room, LiveData, and data binding for a reactive and maintainable design.
-- LiveData from Room guarantees automatic UI updates without manual refreshes.
+- Tasks are now visually grouped by category, improving readability and structure.
+- The sealed class + ListAdapter architecture allows scalable, maintainable RecyclerView logic.
+- All list transformations are handled inside the ViewModel, ensuring MVVM separation.
+- Room continues to ensure persistent task storage, and all UI updates remain reactive through LiveData.
 
 ---
 
-> This assignment is part of the Mobile Development course at [Universidade de Vigo].  
+> This assignment is part of the Mobile Development course at **Universidade de Vigo**.  
 > See the course syllabus and lab instructions for more details.
