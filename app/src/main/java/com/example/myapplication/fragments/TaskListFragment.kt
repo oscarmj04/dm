@@ -8,12 +8,14 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.R
-import com.example.myapplication.Task
-import com.example.myapplication.TaskAdapter
-import com.example.myapplication.model.TaskViewModel
+import com.example.myapplication.TaskListAdapter
+import com.example.myapplication.TaskListItem
 import com.example.myapplication.databinding.FragmentTaskListBinding
+import com.example.myapplication.model.TaskViewModel
 
 class TaskListFragment : Fragment() {
 
@@ -21,6 +23,8 @@ class TaskListFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val viewModel: TaskViewModel by activityViewModels()
+
+    private lateinit var adapter: TaskListAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -33,19 +37,107 @@ class TaskListFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        binding.recyclerViewTasks.layoutManager = LinearLayoutManager(requireContext())
-
-        // Observa tareas de Room y pinta la lista
-        viewModel.tasks.observe(viewLifecycleOwner) { items ->
-            val adapter = TaskAdapter(items) { task: Task ->
-                val args = Bundle().apply { putInt("taskId", task.id) }
-                findNavController().navigate(
-                    R.id.action_taskListFragment_to_taskDetailFragment,
-                    args
-                )
-            }
-            binding.recyclerViewTasks.adapter = adapter
+        // Adapter con callback de click en tareas
+        adapter = TaskListAdapter { task ->
+            val args = Bundle().apply { putInt("taskId", task.id) }
+            findNavController().navigate(
+                R.id.action_taskListFragment_to_taskDetailFragment,
+                args
+            )
         }
+
+        binding.recyclerViewTasks.layoutManager = LinearLayoutManager(requireContext())
+        binding.recyclerViewTasks.adapter = adapter
+
+        // Observa la lista transformada (headers + tasks) desde el ViewModel
+        viewModel.taskListItems.observe(viewLifecycleOwner) { items ->
+            adapter.submitList(items)
+        }
+
+        // Gestos: swipe izquierda/derecha y drag & drop para tareas (no headers)
+        val callback = object : ItemTouchHelper.SimpleCallback(
+            ItemTouchHelper.UP or ItemTouchHelper.DOWN,
+            ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT
+        ) {
+            override fun getMovementFlags(
+                recyclerView: RecyclerView,
+                viewHolder: RecyclerView.ViewHolder
+            ): Int {
+                val position = viewHolder.bindingAdapterPosition
+                if (position == RecyclerView.NO_POSITION) return 0
+
+                val item = adapter.currentList.getOrNull(position) ?: return 0
+
+                return when (item) {
+                    is TaskListItem.Header -> 0 // headers: ni drag ni swipe
+                    is TaskListItem.TaskItem -> {
+                        val dragFlags = ItemTouchHelper.UP or ItemTouchHelper.DOWN
+                        val swipeFlags = ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT
+                        makeMovementFlags(dragFlags, swipeFlags)
+                    }
+                }
+            }
+
+            override fun onMove(
+                recyclerView: RecyclerView,
+                viewHolder: RecyclerView.ViewHolder,
+                target: RecyclerView.ViewHolder
+            ): Boolean {
+                val fromPos = viewHolder.bindingAdapterPosition
+                val toPos = target.bindingAdapterPosition
+                if (fromPos == RecyclerView.NO_POSITION || toPos == RecyclerView.NO_POSITION) {
+                    return false
+                }
+
+                val current = adapter.currentList.toMutableList()
+                val fromItem = current.getOrNull(fromPos)
+                val toItem = current.getOrNull(toPos)
+
+                // Solo permitimos mover tareas dentro de la misma categoría
+                if (fromItem !is TaskListItem.TaskItem || toItem !is TaskListItem.TaskItem) {
+                    return false
+                }
+                if (fromItem.task.category != toItem.task.category) {
+                    return false
+                }
+
+                // Reordenar solo a nivel de UI (no persistimos el orden)
+                current.removeAt(fromPos)
+                val insertIndex = if (fromPos < toPos) toPos - 1 else toPos
+                current.add(insertIndex, fromItem)
+
+                adapter.submitList(current)
+                return true
+            }
+
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+                val position = viewHolder.bindingAdapterPosition
+                if (position == RecyclerView.NO_POSITION) return
+
+                val item = adapter.currentList.getOrNull(position)
+                if (item !is TaskListItem.TaskItem) {
+                    // Por seguridad, para headers reponemos la vista
+                    adapter.notifyItemChanged(position)
+                    return
+                }
+
+                val task = item.task
+                when (direction) {
+                    ItemTouchHelper.LEFT -> {
+                        // Swipe izquierda: eliminar tarea
+                        viewModel.deleteTask(task.id)
+                    }
+                    ItemTouchHelper.RIGHT -> {
+                        // Swipe derecha: marcar como completada
+                        val updated = task.copy(done = true)
+                        viewModel.updateTask(updated)
+                    }
+                }
+                // Room notificará cambios y taskListItems se actualizará sola
+            }
+        }
+
+        ItemTouchHelper(callback).attachToRecyclerView(binding.recyclerViewTasks)
 
         // Menú "+" solo en la lista
         val menuHost: MenuHost = requireActivity()
@@ -53,10 +145,13 @@ class TaskListFragment : Fragment() {
             override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
                 menuInflater.inflate(R.menu.menu_main, menu)
             }
+
             override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
                 return when (menuItem.itemId) {
                     R.id.action_add_task -> {
-                        findNavController().navigate(R.id.action_taskListFragment_to_taskFormFragment)
+                        findNavController().navigate(
+                            R.id.action_taskListFragment_to_taskFormFragment
+                        )
                         true
                     }
                     else -> false
