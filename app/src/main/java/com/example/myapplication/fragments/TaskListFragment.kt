@@ -129,12 +129,65 @@ class TaskListFragment : Fragment() {
                     }
                     ItemTouchHelper.RIGHT -> {
                         // Swipe derecha: marcar como completada
-                        val updated = task.copy(done = true)
-                        viewModel.updateTask(updated)
+                        if (!task.done) {
+                            val updated = task.copy(done = true)
+                            viewModel.updateTask(updated)
+                        } else {
+                            // Segunda vez → NO hacemos nada
+                            adapter.notifyItemChanged(viewHolder.adapterPosition)
+                            return
+                        }
                     }
                 }
+
                 // Room notificará cambios y taskListItems se actualizará sola
             }
+            override fun onChildDraw(
+                c: android.graphics.Canvas,
+                recyclerView: RecyclerView,
+                viewHolder: RecyclerView.ViewHolder,
+                dX: Float,
+                dY: Float,
+                actionState: Int,
+                isCurrentlyActive: Boolean
+            ) {
+                if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) {
+                    val itemView = viewHolder.itemView
+                    val paint = android.graphics.Paint()
+
+                    if (dX > 0) {
+                        // Swipe derecha → completar (verde)
+                        paint.color = androidx.core.content.ContextCompat.getColor(
+                            requireContext(),
+                            R.color.green
+                        )
+                        c.drawRect(
+                            itemView.left.toFloat(),
+                            itemView.top.toFloat(),
+                            itemView.left.toFloat() + dX,
+                            itemView.bottom.toFloat(),
+                            paint
+                        )
+                    } else if (dX < 0) {
+                        // Swipe izquierda → borrar (rojo)
+                        paint.color = androidx.core.content.ContextCompat.getColor(
+                            requireContext(),
+                            R.color.red
+                        )
+                        c.drawRect(
+                            itemView.right.toFloat() + dX,
+                            itemView.top.toFloat(),
+                            itemView.right.toFloat(),
+                            itemView.bottom.toFloat(),
+                            paint
+                        )
+                    }
+                }
+
+                // Deja que el ItemTouchHelper mueva la vista como siempre
+                super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
+            }
+
         }
 
         ItemTouchHelper(callback).attachToRecyclerView(binding.recyclerViewTasks)
