@@ -136,7 +136,8 @@ class TaskListFragment : Fragment() {
                             // Segunda vez → NO hacemos nada
                             adapter.notifyItemChanged(viewHolder.adapterPosition)
                             return
-                        }}
+                        }
+                    }
                 }
 
                 // Room notificará cambios y taskListItems se actualizará sola
