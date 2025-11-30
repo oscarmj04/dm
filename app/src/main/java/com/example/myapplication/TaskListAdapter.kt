@@ -17,13 +17,15 @@ class TaskListAdapter(
         private const val TYPE_TASK = 1
 
         val DiffCallback = object : DiffUtil.ItemCallback<TaskListItem>() {
+
             override fun areItemsTheSame(old: TaskListItem, new: TaskListItem): Boolean {
                 return when {
+
                     old is TaskListItem.Header && new is TaskListItem.Header ->
                         old.category == new.category
 
                     old is TaskListItem.TaskItem && new is TaskListItem.TaskItem ->
-                        old.task.id == new.task.id
+                        old.task.id == new.task.id   // 🔥 ahora String?
 
                     else -> false
                 }
@@ -35,12 +37,11 @@ class TaskListAdapter(
         }
     }
 
-    override fun getItemViewType(position: Int): Int {
-        return when (getItem(position)) {
+    override fun getItemViewType(position: Int): Int =
+        when (getItem(position)) {
             is TaskListItem.Header -> TYPE_HEADER
             is TaskListItem.TaskItem -> TYPE_TASK
         }
-    }
 
     // -----------------------
     //      VIEW HOLDERS
@@ -60,15 +61,13 @@ class TaskListAdapter(
         val inflater = LayoutInflater.from(parent.context)
 
         return when (viewType) {
-            TYPE_HEADER -> {
-                val binding = ItemHeaderBinding.inflate(inflater, parent, false)
-                HeaderViewHolder(binding)
-            }
+            TYPE_HEADER -> HeaderViewHolder(
+                ItemHeaderBinding.inflate(inflater, parent, false)
+            )
 
-            TYPE_TASK -> {
-                val binding = ItemTaskBinding.inflate(inflater, parent, false)
-                TaskViewHolder(binding)
-            }
+            TYPE_TASK -> TaskViewHolder(
+                ItemTaskBinding.inflate(inflater, parent, false)
+            )
 
             else -> throw IllegalArgumentException("Invalid view type")
         }
@@ -90,16 +89,17 @@ class TaskListAdapter(
                 val t = holder as TaskViewHolder
                 val task = item.task
 
-                // Asignamos los datos directamente a las vistas
                 t.binding.tvTaskTitle.text = task.title
-                t.binding.tvDueDate.text = task.dueDate.toString()
+
+                // 🔥 now dueDate is already a String, no conversion needed
+                t.binding.tvDueDate.text = task.dueDate
+
                 t.binding.tvStatus.text = if (task.done) "✅" else "⏳"
 
                 t.binding.root.setOnClickListener {
                     onTaskClick(task)
                 }
             }
-
         }
     }
 }

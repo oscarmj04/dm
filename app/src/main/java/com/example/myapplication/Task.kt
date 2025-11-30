@@ -1,16 +1,23 @@
 package com.example.myapplication
 
-import androidx.room.Entity
-import androidx.room.PrimaryKey
-import java.io.Serializable
-import java.time.LocalDate
+// @Entity(tableName = "tasks")   // Room deshabilitado temporalmente
 
-@Entity(tableName = "tasks")
+//import androidx.room.PrimaryKey
+import com.squareup.moshi.Json
+import java.io.Serializable
+
 data class Task(
-    @PrimaryKey(autoGenerate = true) var id: Int,
+
+    // ID remoto de CrudCrud
+    @Json(name = "_id")
+    var id: String? = null,
+
     var title: String,
     var description: String,
-    var dueDate: LocalDate,
+
+    // String para compatibilidad total con Retrofit/Moshi
+    var dueDate: String,
+
     var category: Category,
     var done: Boolean
 ) : Serializable

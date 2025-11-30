@@ -13,7 +13,7 @@ import com.example.myapplication.Category
 import com.example.myapplication.Task
 import com.example.myapplication.model.TaskViewModel
 import com.example.myapplication.databinding.FragmentTaskFormBinding
-import java.time.LocalDate
+import java.util.*
 
 class TaskFormFragment : Fragment() {
 
@@ -29,55 +29,82 @@ class TaskFormFragment : Fragment() {
         _binding = FragmentTaskFormBinding.inflate(inflater, container, false)
         binding.lifecycleOwner = viewLifecycleOwner
 
-        // Task base para two-way
+        // Tarea base para DataBinding (compatible con CrudCrud)
         binding.task = Task(
-            id = 0, // Room autogenera
+            id = null,                         // ID lo genera CrudCrud
             title = "",
             description = "",
-            dueDate = LocalDate.now(),
+            dueDate = getTodayString(),        // String, no LocalDate
             category = Category.PERSONAL,
             done = false
         )
+
         return binding.root
+    }
+
+    private fun getTodayString(): String {
+        val calendar = Calendar.getInstance()
+        val y = calendar.get(Calendar.YEAR)
+        val m = calendar.get(Calendar.MONTH) + 1
+        val d = calendar.get(Calendar.DAY_OF_MONTH)
+        return String.format("%04d-%02d-%02d", y, m, d)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Categorías (AutoComplete) threshold=0
+        // --------------------------
+        //   Categorías AutoComplete
+        // --------------------------
         val catNames = Category.values().map { it.name }
         val catAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, catNames)
+
         binding.actvCategory.apply {
             setAdapter(catAdapter)
             threshold = 0
+
+            setText(binding.task?.category?.name ?: Category.PERSONAL.name, false)
+
             setOnClickListener { showDropDown() }
             setOnFocusChangeListener { _, hasFocus -> if (hasFocus) showDropDown() }
-            setText(binding.task?.category?.name ?: Category.PERSONAL.name, false)
             setOnItemClickListener { _, _, pos, _ ->
                 binding.task?.category = Category.valueOf(catNames[pos])
             }
         }
 
-        // Fecha (DatePicker)
-        binding.etDueDate.setText(binding.task?.dueDate?.toString().orEmpty())
+        // --------------------------
+        //        DatePicker
+        // --------------------------
+        binding.etDueDate.setText(binding.task?.dueDate)
+
         binding.etDueDate.setOnClickListener {
-            val d = binding.task?.dueDate ?: LocalDate.now()
+            val dateStr = binding.task?.dueDate ?: getTodayString()
+            val parts = dateStr.split("-")
+
+            val year = parts[0].toInt()
+            val month = parts[1].toInt() - 1
+            val day = parts[2].toInt()
+
             DatePickerDialog(
                 requireContext(),
-                { _, y, m, day ->
-                    val picked = LocalDate.of(y, m + 1, day)
+                { _, y, m, d ->
+                    val picked = String.format("%04d-%02d-%02d", y, m + 1, d)
                     binding.task?.dueDate = picked
-                    binding.etDueDate.setText(picked.toString())
+                    binding.etDueDate.setText(picked)
                 },
-                d.year, d.monthValue - 1, d.dayOfMonth
+                year, month, day
             ).show()
         }
 
-        // Guardar → insertar en Room (vía ViewModel)
+        // --------------------------
+        //       Guardar → POST
+        // --------------------------
         binding.btnSave.setOnClickListener {
-            val newTask = binding.task!!.copy(id = 0) // id lo pone Room
-            viewModel.addTask(newTask)
-            findNavController().popBackStack() // la lista se actualiza sola por LiveData
+            val newTask = binding.task ?: return@setOnClickListener
+
+            viewModel.addTask(newTask) {
+                findNavController().popBackStack()
+            }
         }
     }
 
