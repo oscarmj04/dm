@@ -30,6 +30,7 @@ class TaskListFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+        viewModel.loadTasks()
         _binding = FragmentTaskListBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -39,7 +40,9 @@ class TaskListFragment : Fragment() {
 
         // Adapter con callback de click en tareas
         adapter = TaskListAdapter { task ->
-            val args = Bundle().apply { putInt("taskId", task.id) }
+            val args = Bundle().apply {
+                putString("taskId", task.id)   // ID ahora es String
+            }
             findNavController().navigate(
                 R.id.action_taskListFragment_to_taskDetailFragment,
                 args
@@ -49,12 +52,12 @@ class TaskListFragment : Fragment() {
         binding.recyclerViewTasks.layoutManager = LinearLayoutManager(requireContext())
         binding.recyclerViewTasks.adapter = adapter
 
-        // Observa la lista transformada (headers + tasks) desde el ViewModel
+        // Observa los items (headers + tareas)
         viewModel.taskListItems.observe(viewLifecycleOwner) { items ->
             adapter.submitList(items)
         }
 
-        // Gestos: swipe izquierda/derecha y drag & drop para tareas (no headers)
+        // Swipe y drag & drop
         val callback = object : ItemTouchHelper.SimpleCallback(
             ItemTouchHelper.UP or ItemTouchHelper.DOWN,
             ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT
@@ -69,7 +72,7 @@ class TaskListFragment : Fragment() {
                 val item = adapter.currentList.getOrNull(position) ?: return 0
 
                 return when (item) {
-                    is TaskListItem.Header -> 0 // headers: ni drag ni swipe
+                    is TaskListItem.Header -> 0  // headers no se mueven
                     is TaskListItem.TaskItem -> {
                         val dragFlags = ItemTouchHelper.UP or ItemTouchHelper.DOWN
                         val swipeFlags = ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT
@@ -93,7 +96,6 @@ class TaskListFragment : Fragment() {
                 val fromItem = current.getOrNull(fromPos)
                 val toItem = current.getOrNull(toPos)
 
-                // Solo permitimos mover tareas dentro de la misma categoría
                 if (fromItem !is TaskListItem.TaskItem || toItem !is TaskListItem.TaskItem) {
                     return false
                 }
@@ -101,7 +103,6 @@ class TaskListFragment : Fragment() {
                     return false
                 }
 
-                // Reordenar solo a nivel de UI (no persistimos el orden)
                 current.removeAt(fromPos)
                 val insertIndex = if (fromPos < toPos) toPos - 1 else toPos
                 current.add(insertIndex, fromItem)
@@ -116,32 +117,30 @@ class TaskListFragment : Fragment() {
 
                 val item = adapter.currentList.getOrNull(position)
                 if (item !is TaskListItem.TaskItem) {
-                    // Por seguridad, para headers reponemos la vista
                     adapter.notifyItemChanged(position)
                     return
                 }
 
                 val task = item.task
+
                 when (direction) {
                     ItemTouchHelper.LEFT -> {
-                        // Swipe izquierda: eliminar tarea
-                        viewModel.deleteTask(task.id)
+                        // 🔥 delete → ahora requiere id: String
+                        task.id?.let { id ->
+                            viewModel.deleteTask(id)
+                        } ?: adapter.notifyItemChanged(position)
                     }
                     ItemTouchHelper.RIGHT -> {
-                        // Swipe derecha: marcar como completada
                         if (!task.done) {
                             val updated = task.copy(done = true)
                             viewModel.updateTask(updated)
                         } else {
-                            // Segunda vez → NO hacemos nada
                             adapter.notifyItemChanged(viewHolder.adapterPosition)
-                            return
                         }
                     }
                 }
-
-                // Room notificará cambios y taskListItems se actualizará sola
             }
+
             override fun onChildDraw(
                 c: android.graphics.Canvas,
                 recyclerView: RecyclerView,
@@ -156,7 +155,6 @@ class TaskListFragment : Fragment() {
                     val paint = android.graphics.Paint()
 
                     if (dX > 0) {
-                        // Swipe derecha → completar (verde)
                         paint.color = androidx.core.content.ContextCompat.getColor(
                             requireContext(),
                             R.color.green
@@ -169,7 +167,6 @@ class TaskListFragment : Fragment() {
                             paint
                         )
                     } else if (dX < 0) {
-                        // Swipe izquierda → borrar (rojo)
                         paint.color = androidx.core.content.ContextCompat.getColor(
                             requireContext(),
                             R.color.red
@@ -183,16 +180,13 @@ class TaskListFragment : Fragment() {
                         )
                     }
                 }
-
-                // Deja que el ItemTouchHelper mueva la vista como siempre
                 super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
             }
-
         }
 
         ItemTouchHelper(callback).attachToRecyclerView(binding.recyclerViewTasks)
 
-        // Menú "+" solo en la lista
+        // Menú "+"
         val menuHost: MenuHost = requireActivity()
         menuHost.addMenuProvider(object : MenuProvider {
             override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
