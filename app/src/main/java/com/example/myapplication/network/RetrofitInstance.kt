@@ -7,9 +7,9 @@ import retrofit2.converter.moshi.MoshiConverterFactory
 
 object RetrofitInstance {
 
-
+    private const val KEY = "feff4e1a503d4381a61abf9a9d982580"
     private const val BASE_URL =
-        "https://crudcrud.com/api/feff4e1a503d4381a61abf9a9d982580/"
+        "https://crudcrud.com/api/$KEY/"
 
     // Moshi con soporte para Kotlin
     private val moshi = Moshi.Builder()

@@ -25,7 +25,7 @@ class TaskListAdapter(
                         old.category == new.category
 
                     old is TaskListItem.TaskItem && new is TaskListItem.TaskItem ->
-                        old.task.id == new.task.id   // 🔥 ahora String?
+                        old.task.id == new.task.id   // ahora String?
 
                     else -> false
                 }
@@ -91,7 +91,7 @@ class TaskListAdapter(
 
                 t.binding.tvTaskTitle.text = task.title
 
-                // 🔥 now dueDate is already a String, no conversion needed
+                //now dueDate is already a String, no conversion needed
                 t.binding.tvDueDate.text = task.dueDate
 
                 t.binding.tvStatus.text = if (task.done) "✅" else "⏳"
