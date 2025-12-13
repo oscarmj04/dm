@@ -1,94 +1,66 @@
 package com.example.myapplication.model
 
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.map
 import androidx.lifecycle.viewModelScope
-import com.example.myapplication.Category
-import com.example.myapplication.Task
 import com.example.myapplication.TaskListItem
-import com.example.myapplication.network.RetrofitInstance
+import com.example.myapplication.data.repository.TaskRepository
+import com.example.myapplication.domain.Task
 import kotlinx.coroutines.launch
 
-class TaskViewModel : ViewModel() {
+class TaskViewModel(
+    private val repository: TaskRepository
+) : ViewModel() {
+    // LiveData que expone la lista de tareas del repositorio
+    val tasks: LiveData<List<Task>> = repository.getTasks()
 
-    // LiveData para exponer la lista de tareas al UI
-    private val _tasks = MutableLiveData<List<Task>>()
-    val tasks: LiveData<List<Task>> = _tasks
-    val taskListItems: LiveData<List<TaskListItem>> = tasks.map { list ->
-        if (list.isNullOrEmpty()) {
-            emptyList()
-        } else {
+    val taskListItems: LiveData<List<TaskListItem>> =
+        tasks.map { list ->
             list
-                .sortedWith(
-                    compareBy<Task> { it.category.name }
-                        .thenBy { it.dueDate }
-                )
+                .sortedWith(compareBy<Task> { it.category }.thenBy { it.dueDate })
                 .groupBy { it.category }
-                .flatMap { (category: Category, categoryTasks: List<Task>) ->
+                .flatMap { (category, tasksInCategory) ->
                     listOf(TaskListItem.Header(category)) +
-                            categoryTasks.map { TaskListItem.TaskItem(it) }
+                            tasksInCategory.map { TaskListItem.TaskItem(it) }
                 }
         }
+    init {
+        // Al crear el ViewModel, actualiza Room con los datos remotos
+        refresh()
     }
 
-    // Cargar todas las tareas desde CrudCrud
-    fun loadTasks() {
+    fun refresh() {
         viewModelScope.launch {
             try {
-                val result = RetrofitInstance.api.getTasks()
-                _tasks.postValue(result)
+                repository.refreshFromRemote()
             } catch (e: Exception) {
                 e.printStackTrace()
             }
         }
     }
 
-    // Crear nueva tarea
     fun addTask(task: Task, onFinished: (() -> Unit)? = null) {
         viewModelScope.launch {
-            try {
-                RetrofitInstance.api.addTask(task)
-                loadTasks()  // refrescar lista
-                onFinished?.invoke()
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
+            repository.addTask(task)
+            onFinished?.invoke()
         }
     }
 
-    // Actualizar una tarea existente
     fun updateTask(task: Task, onFinished: (() -> Unit)? = null) {
         viewModelScope.launch {
-            try {
-                val id = task.id ?: return@launch
-                // CrudCrud NO permite enviar el campo _id
-                val taskToSend = task.copy(id = null)
-
-                RetrofitInstance.api.updateTask(id, taskToSend)
-                loadTasks()
-                onFinished?.invoke()
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
+            repository.updateTask(task)
+            onFinished?.invoke()
         }
     }
 
-    // Eliminar tarea
-    fun deleteTask(taskId: String, onFinished: (() -> Unit)? = null) {
+    fun deleteTask(task: Task, onFinished: (() -> Unit)? = null) {
         viewModelScope.launch {
-            try {
-                RetrofitInstance.api.deleteTask(taskId)
-                loadTasks()
-                onFinished?.invoke()
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
+            repository.deleteTask(task)
+            onFinished?.invoke()
         }
     }
-    fun getTaskById(id: String): Task? {
-        return _tasks.value?.find { it.id == id }
-    }
 
+    fun getTaskById(localId: Int): Task? =
+        tasks.value?.find { it.localId == localId }
 }

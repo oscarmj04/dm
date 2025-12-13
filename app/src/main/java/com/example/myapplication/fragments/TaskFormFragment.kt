@@ -10,9 +10,9 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import com.example.myapplication.Category
-import com.example.myapplication.Task
-import com.example.myapplication.model.TaskViewModel
 import com.example.myapplication.databinding.FragmentTaskFormBinding
+import com.example.myapplication.domain.Task
+import com.example.myapplication.model.TaskViewModel
 import java.util.*
 
 class TaskFormFragment : Fragment() {
@@ -27,14 +27,13 @@ class TaskFormFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentTaskFormBinding.inflate(inflater, container, false)
-        binding.lifecycleOwner = viewLifecycleOwner
 
-        // Tarea base para DataBinding (compatible con CrudCrud)
         binding.task = Task(
-            id = null,                         // ID lo genera CrudCrud
+            localId = 0,
+            remoteId = null,
             title = "",
             description = "",
-            dueDate = getTodayString(),        // String, no LocalDate
+            dueDate = getTodayString(),
             category = Category.PERSONAL,
             done = false
         )
@@ -43,66 +42,61 @@ class TaskFormFragment : Fragment() {
     }
 
     private fun getTodayString(): String {
-        val calendar = Calendar.getInstance()
-        val y = calendar.get(Calendar.YEAR)
-        val m = calendar.get(Calendar.MONTH) + 1
-        val d = calendar.get(Calendar.DAY_OF_MONTH)
-        return String.format("%04d-%02d-%02d", y, m, d)
+        val c = Calendar.getInstance()
+        return "%04d-%02d-%02d".format(
+            c.get(Calendar.YEAR),
+            c.get(Calendar.MONTH) + 1,
+            c.get(Calendar.DAY_OF_MONTH)
+        )
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // --------------------------
-        //   Categorías AutoComplete
-        // --------------------------
         val catNames = Category.values().map { it.name }
-        val catAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, catNames)
+        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, catNames)
 
         binding.actvCategory.apply {
-            setAdapter(catAdapter)
-            threshold = 0
-
-            setText(binding.task?.category?.name ?: Category.PERSONAL.name, false)
+            setAdapter(adapter)
+            threshold = 0          // 👈 AÑADIDO PARA ABRIR EL MENÚ SIN ESCRIBIR
+            setText(binding.task!!.category.name, false)
 
             setOnClickListener { showDropDown() }
             setOnFocusChangeListener { _, hasFocus -> if (hasFocus) showDropDown() }
+
             setOnItemClickListener { _, _, pos, _ ->
-                binding.task?.category = Category.valueOf(catNames[pos])
+                binding.task = binding.task!!.copy(category = Category.valueOf(catNames[pos]))
             }
         }
 
-        // --------------------------
-        //        DatePicker
-        // --------------------------
-        binding.etDueDate.setText(binding.task?.dueDate)
-
+        // -----------------------------
+        //        DATE PICKER
+        // -----------------------------
+        binding.etDueDate.setText(binding.task!!.dueDate)
         binding.etDueDate.setOnClickListener {
-            val dateStr = binding.task?.dueDate ?: getTodayString()
-            val parts = dateStr.split("-")
+            val t = binding.task!!
+            val parts = t.dueDate.split("-")
+            val y = parts[0].toInt()
+            val m = parts[1].toInt() - 1
+            val d = parts[2].toInt()
 
-            val year = parts[0].toInt()
-            val month = parts[1].toInt() - 1
-            val day = parts[2].toInt()
-
-            DatePickerDialog(
-                requireContext(),
-                { _, y, m, d ->
-                    val picked = String.format("%04d-%02d-%02d", y, m + 1, d)
-                    binding.task?.dueDate = picked
-                    binding.etDueDate.setText(picked)
-                },
-                year, month, day
-            ).show()
+            DatePickerDialog(requireContext(), { _, yy, mm, dd ->
+                val newDate = "%04d-%02d-%02d".format(yy, mm + 1, dd)
+                binding.task = t.copy(dueDate = newDate)
+                binding.etDueDate.setText(newDate)
+            }, y, m, d).show()
         }
 
-        // --------------------------
-        //       Guardar → POST
-        // --------------------------
+        // -----------------------------
+        //       SAVE
+        // -----------------------------
         binding.btnSave.setOnClickListener {
-            val newTask = binding.task ?: return@setOnClickListener
+            val t = binding.task!!.copy(
+                title = binding.etTitle.text.toString(),
+                description = binding.etDescription.text.toString()
+            )
 
-            viewModel.addTask(newTask) {
+            viewModel.addTask(t) {
                 findNavController().popBackStack()
             }
         }
