@@ -1,37 +1,37 @@
-# 📱 Mobile Task Manager – Assignment 10
+# 📱 Mobile Task Manager – Assignment 12
 
-This repository contains the implementation for **Assignment 10** of the Task Manager App project.
+This repository contains the implementation for **Assignment 12** of the Task Manager App project.
 
 ## 🎯 Assignment Goal
 
-_Enhance the task list UI by introducing **category grouping**, **heterogeneous RecyclerView items**, and **gesture-based interactions** (swipe + drag), while maintaining MVVM structure with Room as the persistence layer._
+Refine the app architecture by implementing the **Repository pattern**, introducing a clear separation between the UI, domain, local persistence (Room) and remote data source (CRUD CRUD).
+
+The goal is to abstract all data access logic so the ViewModel interacts with a clean, unified interface, without directly depending on Room or Retrofit.
 
 ## ✅ Implemented Features
 
-- **TaskListItem.kt** – sealed class defining heterogeneous RecyclerView items (`Header` and `TaskItem`).
-- **TaskViewModel.kt** – now exposes a transformed list  
-  `taskListItems: LiveData<List<TaskListItem>>`  
-  grouping tasks by category and ordering them by due date.
-- **TaskListAdapter.kt** – migrated to `ListAdapter` with `DiffUtil`, supporting two distinct view types with separate ViewHolders.
-- **item_header.xml** – new layout for category header sections, visually differentiating categories within the list.
-- **TaskListFragment** – updated to observe `taskListItems` and to configure gesture-based interactions:
-  - **Swipe left →** delete task  
-  - **Swipe right →** mark task as completed  
-  - **Drag & drop →** reorder tasks within the same category  
-- **Gesture handling** – implemented using `ItemTouchHelper`, ensuring header elements cannot be swiped or dragged.
+- **Repository Pattern**
+  - Introduced `TaskRepository` as the single source of truth.
+  - The ViewModel only calls repository methods (`getTasks`, `addTask`, `updateTask`, `deleteTask`).
+  - No direct access to DAO or Retrofit from the ViewModel.
 
-## 🚧 Known Issues
+- **Separated Data Models**
+  - `TaskEntity` for Room persistence (localId + remoteId).
+  - `TaskDto` for network communication with CRUD CRUD.
+  - `Task` as the domain/UI model exposed to the ViewModel and UI.
 
-- Drag & drop order is not persisted (UI-only reordering).
+- **Dual Identity Handling**
+  - Stable `localId` for UI and RecyclerView.
+  - Remote `_id` mapped to `remoteId`.
+  - Repository updates `remoteId` after remote creation or sync.
+
+- **Room-first Data Strategy**
+  - UI always reads from Room.
+  - Writes are stored locally first and then synchronized with the server.
+  - Remote refresh is used only to update local data on initial load.
 
 ## 📝 Notes
 
-- Tasks are now visually grouped by category, improving readability and structure.
-- The sealed class + ListAdapter architecture allows scalable, maintainable RecyclerView logic.
-- All list transformations are handled inside the ViewModel, ensuring MVVM separation.
-- Room continues to ensure persistent task storage, and all UI updates remain reactive through LiveData.
-
----
-
-> This assignment is part of the Mobile Development course at **Universidade de Vigo**.  
-> See the course syllabus and lab instructions for more details.
+- Architecture responsibilities are clearly separated (UI, ViewModel, Repository, DAO, API).
+- The current structure lays the groundwork for offline-first or synchronized workflows.
+- UI behavior remains unchanged while the internal architecture is fully refactored.
