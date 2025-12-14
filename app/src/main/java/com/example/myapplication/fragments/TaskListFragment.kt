@@ -16,13 +16,20 @@ import com.example.myapplication.TaskListAdapter
 import com.example.myapplication.TaskListItem
 import com.example.myapplication.databinding.FragmentTaskListBinding
 import com.example.myapplication.model.TaskViewModel
+import com.example.myapplication.MyApplication
+import com.example.myapplication.model.TaskViewModelFactory
 
 class TaskListFragment : Fragment() {
 
     private var _binding: FragmentTaskListBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModel: TaskViewModel by activityViewModels()
+    // ViewModel con factory
+    private val viewModel: TaskViewModel by activityViewModels {
+        TaskViewModelFactory(
+            (requireActivity().application as MyApplication).repository
+        )
+    }
 
     private lateinit var adapter: TaskListAdapter
 
@@ -30,7 +37,6 @@ class TaskListFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        viewModel.loadTasks()
         _binding = FragmentTaskListBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -38,10 +44,10 @@ class TaskListFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Adapter con callback de click en tareas
+        // Adapter con callback de click → enviamos localId (INT)
         adapter = TaskListAdapter { task ->
             val args = Bundle().apply {
-                putString("taskId", task.id)   // ID ahora es String
+                putInt("taskId", task.localId)
             }
             findNavController().navigate(
                 R.id.action_taskListFragment_to_taskDetailFragment,
@@ -52,27 +58,28 @@ class TaskListFragment : Fragment() {
         binding.recyclerViewTasks.layoutManager = LinearLayoutManager(requireContext())
         binding.recyclerViewTasks.adapter = adapter
 
-        // Observa los items (headers + tareas)
+        // Observar lista
         viewModel.taskListItems.observe(viewLifecycleOwner) { items ->
             adapter.submitList(items)
         }
 
-        // Swipe y drag & drop
+        // Swipe + Drag & Drop
         val callback = object : ItemTouchHelper.SimpleCallback(
             ItemTouchHelper.UP or ItemTouchHelper.DOWN,
             ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT
         ) {
+
             override fun getMovementFlags(
                 recyclerView: RecyclerView,
                 viewHolder: RecyclerView.ViewHolder
             ): Int {
-                val position = viewHolder.bindingAdapterPosition
-                if (position == RecyclerView.NO_POSITION) return 0
+                val pos = viewHolder.bindingAdapterPosition
+                if (pos == RecyclerView.NO_POSITION) return 0
 
-                val item = adapter.currentList.getOrNull(position) ?: return 0
+                val item = adapter.currentList.getOrNull(pos) ?: return 0
 
                 return when (item) {
-                    is TaskListItem.Header -> 0  // headers no se mueven
+                    is TaskListItem.Header -> 0
                     is TaskListItem.TaskItem -> {
                         val dragFlags = ItemTouchHelper.UP or ItemTouchHelper.DOWN
                         val swipeFlags = ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT
@@ -88,54 +95,48 @@ class TaskListFragment : Fragment() {
             ): Boolean {
                 val fromPos = viewHolder.bindingAdapterPosition
                 val toPos = target.bindingAdapterPosition
-                if (fromPos == RecyclerView.NO_POSITION || toPos == RecyclerView.NO_POSITION) {
-                    return false
-                }
 
-                val current = adapter.currentList.toMutableList()
-                val fromItem = current.getOrNull(fromPos)
-                val toItem = current.getOrNull(toPos)
+                val list = adapter.currentList.toMutableList()
+                if (fromPos !in list.indices || toPos !in list.indices) return false
 
-                if (fromItem !is TaskListItem.TaskItem || toItem !is TaskListItem.TaskItem) {
-                    return false
-                }
-                if (fromItem.task.category != toItem.task.category) {
-                    return false
-                }
+                val from = list[fromPos]
+                val to = list[toPos]
 
-                current.removeAt(fromPos)
+                if (from !is TaskListItem.TaskItem || to !is TaskListItem.TaskItem) return false
+
+                if (from.task.category != to.task.category) return false
+
+                list.removeAt(fromPos)
                 val insertIndex = if (fromPos < toPos) toPos - 1 else toPos
-                current.add(insertIndex, fromItem)
+                list.add(insertIndex, from)
 
-                adapter.submitList(current)
+                adapter.submitList(list)
                 return true
             }
 
-            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
-                val position = viewHolder.bindingAdapterPosition
-                if (position == RecyclerView.NO_POSITION) return
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, dir: Int) {
+                val pos = viewHolder.bindingAdapterPosition
+                val item = adapter.currentList.getOrNull(pos)
 
-                val item = adapter.currentList.getOrNull(position)
                 if (item !is TaskListItem.TaskItem) {
-                    adapter.notifyItemChanged(position)
+                    adapter.notifyItemChanged(pos)
                     return
                 }
 
                 val task = item.task
 
-                when (direction) {
+                when (dir) {
                     ItemTouchHelper.LEFT -> {
-                        // 🔥 delete → ahora requiere id: String
-                        task.id?.let { id ->
-                            viewModel.deleteTask(id)
-                        } ?: adapter.notifyItemChanged(position)
+                        viewModel.deleteTask(task) {
+                            // Nada extra, LiveData recarga
+                        }
                     }
+
                     ItemTouchHelper.RIGHT -> {
                         if (!task.done) {
-                            val updated = task.copy(done = true)
-                            viewModel.updateTask(updated)
+                            viewModel.updateTask(task.copy(done = true))
                         } else {
-                            adapter.notifyItemChanged(viewHolder.adapterPosition)
+                            adapter.notifyItemChanged(pos)
                         }
                     }
                 }
@@ -150,29 +151,23 @@ class TaskListFragment : Fragment() {
                 actionState: Int,
                 isCurrentlyActive: Boolean
             ) {
-                if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) {
-                    val itemView = viewHolder.itemView
-                    val paint = android.graphics.Paint()
+                val paint = android.graphics.Paint()
+                val itemView = viewHolder.itemView
 
+                if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) {
                     if (dX > 0) {
-                        paint.color = androidx.core.content.ContextCompat.getColor(
-                            requireContext(),
-                            R.color.green
-                        )
+                        paint.color = requireContext().getColor(R.color.green)
                         c.drawRect(
                             itemView.left.toFloat(),
                             itemView.top.toFloat(),
-                            itemView.left.toFloat() + dX,
+                            itemView.left + dX,
                             itemView.bottom.toFloat(),
                             paint
                         )
                     } else if (dX < 0) {
-                        paint.color = androidx.core.content.ContextCompat.getColor(
-                            requireContext(),
-                            R.color.red
-                        )
+                        paint.color = requireContext().getColor(R.color.red)
                         c.drawRect(
-                            itemView.right.toFloat() + dX,
+                            itemView.right + dX,
                             itemView.top.toFloat(),
                             itemView.right.toFloat(),
                             itemView.bottom.toFloat(),
@@ -180,6 +175,7 @@ class TaskListFragment : Fragment() {
                         )
                     }
                 }
+
                 super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
             }
         }
@@ -189,12 +185,13 @@ class TaskListFragment : Fragment() {
         // Menú "+"
         val menuHost: MenuHost = requireActivity()
         menuHost.addMenuProvider(object : MenuProvider {
-            override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
-                menuInflater.inflate(R.menu.menu_main, menu)
+
+            override fun onCreateMenu(menu: Menu, inflater: MenuInflater) {
+                inflater.inflate(R.menu.menu_main, menu)
             }
 
-            override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
-                return when (menuItem.itemId) {
+            override fun onMenuItemSelected(item: MenuItem): Boolean {
+                return when (item.itemId) {
                     R.id.action_add_task -> {
                         findNavController().navigate(
                             R.id.action_taskListFragment_to_taskFormFragment
@@ -204,6 +201,7 @@ class TaskListFragment : Fragment() {
                     else -> false
                 }
             }
+
         }, viewLifecycleOwner, Lifecycle.State.RESUMED)
     }
 

@@ -1,7 +1,6 @@
 package com.example.myapplication
 
-import com.example.myapplication.Category
-import com.example.myapplication.Task
+import com.example.myapplication.domain.Task
 
 // Representa un ítem de la lista: puede ser un encabezado de categoría o una tarea
 sealed class TaskListItem {

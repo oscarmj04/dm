@@ -1,17 +1,21 @@
 package com.example.myapplication.fragments
 
 import android.app.DatePickerDialog
+import android.os.Build
 import android.os.Bundle
 import android.view.*
 import android.widget.ArrayAdapter
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
+import com.example.myapplication.MyApplication
 import com.example.myapplication.Category
-import com.example.myapplication.Task
-import com.example.myapplication.model.TaskViewModel
 import com.example.myapplication.databinding.FragmentTaskEditBinding
+import com.example.myapplication.domain.Task
+import com.example.myapplication.model.TaskViewModel
+import com.example.myapplication.model.TaskViewModelFactory
 import java.util.*
 
 class TaskEditFragment : Fragment() {
@@ -19,9 +23,14 @@ class TaskEditFragment : Fragment() {
     private var _binding: FragmentTaskEditBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModel: TaskViewModel by activityViewModels()
+    // ViewModel con Factory (como en los demás fragments)
+    private val viewModel: TaskViewModel by activityViewModels {
+        TaskViewModelFactory(
+            (requireActivity().application as MyApplication).repository
+        )
+    }
 
-    private var taskId: String? = null  //ahora es String, no Int
+    private var localId: Int = -1
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -32,24 +41,26 @@ class TaskEditFragment : Fragment() {
         return binding.root
     }
 
+    @RequiresApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         // -------------------------------
-        //   Leer ID remoto desde argumentos
+        //   Obtener ID desde argumentos
         // -------------------------------
-        taskId = arguments?.getString("taskId")
+        localId = arguments?.getInt("taskId", -1) ?: -1
 
-        if (taskId == null) {
+        if (localId == -1) {
             Toast.makeText(requireContext(), "Tarea no encontrada", Toast.LENGTH_SHORT).show()
             findNavController().popBackStack()
             return
         }
 
         // -------------------------------
-        //   Obtener la tarea del ViewModel
+        //   Obtener tarea desde ViewModel
         // -------------------------------
-        val loaded: Task? = viewModel.getTaskById(taskId!!)
+        val loaded: Task? = viewModel.getTaskById(localId)
+
         if (loaded == null) {
             Toast.makeText(requireContext(), "No se pudo cargar la tarea", Toast.LENGTH_SHORT).show()
             findNavController().popBackStack()
@@ -58,12 +69,12 @@ class TaskEditFragment : Fragment() {
 
         binding.task = loaded
 
-        // Inicializar campos visibles
+        // Inicializar UI
         binding.etDueDate.setText(loaded.dueDate)
         binding.actvCategory.setText(loaded.category.name, false)
 
         // -------------------------------
-        //   Categorías (AutoComplete)
+        //   Categorías AutoComplete
         // -------------------------------
         val catNames = Category.values().map { it.name }
         val catAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, catNames)
@@ -74,18 +85,17 @@ class TaskEditFragment : Fragment() {
             setOnClickListener { showDropDown() }
             setOnFocusChangeListener { _, hasFocus -> if (hasFocus) showDropDown() }
             setOnItemClickListener { _, _, pos, _ ->
-                binding.task?.category = Category.valueOf(catNames[pos])
+                binding.task = binding.task?.copy(category = Category.valueOf(catNames[pos]))
             }
         }
 
         // -------------------------------
-        //           DatePicker
+        //       DatePicker
         // -------------------------------
         binding.etDueDate.setOnClickListener {
 
-            // Convertir fecha actual a calendar (si existe)
-            val calendar = Calendar.getInstance()
             val parts = loaded.dueDate.split("-")
+            val calendar = Calendar.getInstance()
 
             if (parts.size == 3) {
                 calendar.set(parts[0].toInt(), parts[1].toInt() - 1, parts[2].toInt())
@@ -95,7 +105,7 @@ class TaskEditFragment : Fragment() {
                 requireContext(),
                 { _, year, month, day ->
                     val dateStr = String.format("%04d-%02d-%02d", year, month + 1, day)
-                    binding.task?.dueDate = dateStr
+                    binding.task = binding.task?.copy(dueDate = dateStr)
                     binding.etDueDate.setText(dateStr)
                 },
                 calendar.get(Calendar.YEAR),
@@ -105,9 +115,10 @@ class TaskEditFragment : Fragment() {
         }
 
         // -------------------------------
-        //       Guardar cambios → PUT
+        //     Guardar → UPDATE
         // -------------------------------
         binding.btnSave.setOnClickListener {
+
             val updated = binding.task ?: return@setOnClickListener
 
             viewModel.updateTask(updated) {
